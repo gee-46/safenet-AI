@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 SafeNet AI – Core Configuration
 Centralised settings loaded from environment / .env file.
@@ -101,3 +102,6 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return cached singleton Settings instance."""
     return Settings()
+=======
+
+>>>>>>> 6e5223ae2cceedee56e5a13d0b46d847cd20c3df

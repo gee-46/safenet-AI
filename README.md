@@ -377,7 +377,11 @@ pytest tests/unit/test_backend.py::TestScamCallClassifier -v
 **Event:** ET AI Hackathon 2.0 — Phase 2: Build Sprint  
 **Problem:** #6 — AI for Digital Public Safety: Defeating Counterfeiting, Fraud & Digital Arrest Scams  
 **Team:** Gautam N Chipkar  
+<<<<<<< HEAD
 **Submission deadline:** Wednesday, 22nd July 2026, 11:59 PM
+=======
+
+>>>>>>> 6e5223ae2cceedee56e5a13d0b46d847cd20c3df
 
 ---
 

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 SafeNet AI – Database Layer
 SQLAlchemy async models + session factory.
@@ -221,3 +222,6 @@ class AuditLog(Base):
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+=======
+
+>>>>>>> 6e5223ae2cceedee56e5a13d0b46d847cd20c3df
