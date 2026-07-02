@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ML model weights (too large for git, use git-lfs or store separately)
+ml_training/*/checkpoints/
+*.pt
+*.bin
+*.safetensors
+*.onnx
+
+# Data (real data never in git)
+data/counterfeit/images/
+data/ncrb/
+data/rbi/
+*.csv
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic (generated files)
+alembic/versions/*.py
