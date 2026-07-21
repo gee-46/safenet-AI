@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Python-3.11-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/FastAPI-0.111-green?style=flat-square" />
   <img src="https://img.shields.io/badge/Neo4j-5.18-orange?style=flat-square" />
-  <img src="https://img.shields.io/badge/Tests-51%20passing-brightgreen?style=flat-square" />
+  <img src="https://img.shields.io/badge/Tests-74%2F74%20passing-brightgreen?style=flat-square" />
   <img src="https://img.shields.io/badge/ET%20AI%20Hackathon-2026-purple?style=flat-square" />
 </p>
 
@@ -69,7 +69,7 @@ safenet-ai/
 │   ├── db/
 │   │   └── models.py                 # 8 SQLAlchemy async models + session factory
 │   ├── schemas/
-│   │   └── schemas.py                # 27 Pydantic request/response schemas
+│   │   └── schemas.py                # 30 Pydantic request/response schemas
 │   │
 │   ├── models/                       # ML inference modules
 │   │   ├── scam/
@@ -88,15 +88,21 @@ safenet-ai/
 │   │   └── geo_intelligence.py       # H3 hexagonal clustering + DBSCAN hotspots
 │   │
 │   ├── api/routes/                   # FastAPI route handlers
+│   │   ├── auth_routes.py            # POST /auth/register, /login, /refresh, GET /me
 │   │   ├── scam_routes.py            # POST /calls/analyze + 4 more
 │   │   ├── currency_routes.py        # POST /currency/verify + 3 more
-│   │   ├── fraud_routes.py           # POST /fraud/graph/query + 5 more
+│   │   ├── fraud_routes.py           # POST /fraud/graph/query + 5 more (officer-gated)
 │   │   ├── heatmap_routes.py         # GET /heatmap/crimes + 3 more
 │   │   ├── citizen_routes.py         # POST /citizen/assess + WhatsApp webhook
 │   │   └── analytics_routes.py       # GET /analytics/dashboard + 2 more
 │   │
 │   └── tasks/
 │       └── celery_tasks.py           # 7 background tasks + beat schedule
+│
+├── alembic/                           # Database schema migrations
+│   ├── env.py
+│   └── versions/
+│       └── c939e8079266_initial_schema.py
 │
 ├── ml_training/                      # Model training scripts
 │   ├── scam/
@@ -108,24 +114,27 @@ safenet-ai/
 │
 ├── tests/
 │   └── unit/
-│       └── test_backend.py           # 51 tests across all modules
+│       ├── test_backend.py           # 51 tests — ML, geo, evidence, citizen shield
+│       └── test_auth.py              # 23 tests — hashing, JWT, RBAC, route protection
 │
 ├── scripts/
-│   └── seed_demo_data.py             # Seeds 342 realistic records for demo
+│   ├── seed_demo_data.py             # Seeds 342 realistic demo records
+│   ├── ingest_ncrb.py                # NCRB state-wise cybercrime baseline data
+│   └── ingest_rbi_currency.py        # RBI FICN counterfeit baseline data
 │
-├── frontend/                         # [TODO] Next.js law enforcement dashboard
-├── mobile/                           # [TODO] React Native CounterfeitLens app
+├── frontend/                         # React 19 + Vite law-enforcement console (8 pages)
+├── mobile/                           # Expo Router citizen app (auth + CounterfeitLens)
 │
 ├── Dockerfile                        # Multi-stage build, Tesseract OCR
 ├── docker-compose.yml                # Full stack: PG + Redis + Neo4j + Qdrant
-├── requirements.txt                  # 35 pinned dependencies
+├── requirements.txt                  # Pinned dependencies
 ├── .env.example                      # All environment variables documented
-└── WORK_REMAINING.md                 # Detailed pending tasks per role
+└── WORK_REMAINING.md                 # Remaining nice-to-haves, honestly tracked
 ```
 
 ---
 
-## Completed Work (Backend + ML)
+## Completed Work
 
 ### ML Models — all in pattern/CV fallback mode, no GPU needed for demo
 
@@ -135,24 +144,47 @@ safenet-ai/
 | Counterfeit Detector | `backend/models/counterfeit/detector.py` | Watermark, security thread, microprint, colour-shift ink, serial number OCR + RBI checksum |
 | Fraud Graph | `backend/models/fraud_graph/graph_intelligence.py` | Neo4j Cypher traversal, heuristic + GNN risk scoring, mule network detection |
 
-### API — 28 endpoints across 6 route groups
+### API — 36 endpoints across 7 route groups
 
 | Group | Endpoints | Key capability |
 |-------|-----------|---------------|
+| `/auth` | 4 | Register, login, refresh, current-user profile (JWT) |
 | `/calls` | 5 | Real-time scam call analysis with instant WhatsApp alert |
 | `/currency` | 4 | Multipart image upload → counterfeit verdict |
-| `/fraud` | 6 | Graph query, entity linking, case management |
+| `/fraud` | 6 | Graph query, entity linking, case management — mutations require officer/admin role |
 | `/heatmap` | 4 | H3 crime clusters, patrol priorities, state summary |
-| `/citizen` | 4 | 12-language fraud assessment + WhatsApp webhook |
+| `/citizen` | 4 | 12-language fraud assessment + WhatsApp webhook — public, no login required |
 | `/analytics` | 3 | Dashboard stats, trend charts, model performance |
+| `/reports` | 3 | Evidence PDF generation + audit trail — officer/admin only |
+
+### Authentication & Authorization
+
+JWT-based auth with bcrypt password hashing (via the `bcrypt` library
+directly — not the unmaintained `passlib` wrapper, which breaks on modern
+bcrypt versions). Role-based guards protect every sensitive mutation:
+
+- **Public** (no login required): citizen fraud assessment, scam-type
+  reference data, helplines, read-only dashboards and heatmaps — anyone
+  reporting or checking a scam should never hit a login wall.
+- **Officer/Admin only**: creating fraud cases, registering entities into
+  the fraud graph, linking entities, updating report status, generating
+  evidence packages, and reading the audit trail.
+
+### Mobile App (Expo Router)
+
+Citizen-facing app with full auth flow (register/login/refresh, tokens in
+`expo-secure-store`, not plaintext AsyncStorage) and four tabs: dashboard,
+**CounterfeitLens** (real camera/gallery capture → live currency
+verification), report history, and profile. See `mobile/README.md`.
 
 ### Infrastructure
 
-- PostgreSQL async (8 models with full audit trail)
+- PostgreSQL async (8 models with full audit trail) — schema versioned via **Alembic migrations**, not `create_all()`
 - Neo4j fraud graph with 6 Cypher query templates
 - Celery task queue (7 tasks, hourly beat schedule)
 - Docker Compose full stack (one command)
-- 51/51 unit tests passing
+- NCRB + RBI historical baseline data ingestion scripts for a realistic demo heatmap from first run
+- **74/74 unit tests passing** (51 core + 23 auth)
 
 ---
 
@@ -183,18 +215,39 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Seed demo data
+### 4. Apply database migrations
+```bash
+alembic upgrade head
+```
+
+### 5. Seed demo data
 ```bash
 python scripts/seed_demo_data.py
 # Seeds: 250 scam reports, 80 counterfeit reports, 12 fraud cases
+
+# Optional — richer, realistic geographic baseline from public data:
+python scripts/ingest_ncrb.py            # NCRB state-wise cybercrime baseline
+python scripts/ingest_rbi_currency.py    # RBI FICN counterfeit baseline
 ```
 
-### 5. Run the API
+### 6. Run the API
 ```bash
 uvicorn backend.main:app --reload --port 8000
 ```
 
-### 6. Open API docs
+### 7. Run the web console (optional)
+```bash
+cd frontend && npm install && npm run dev
+# http://localhost:5173
+```
+
+### 8. Run the mobile app (optional)
+```bash
+cd mobile && npm install && cp .env.example .env && npm start
+# See mobile/README.md for physical-device setup (LAN IP configuration)
+```
+
+### 9. Open API docs
 ```
 http://localhost:8000/docs
 ```
@@ -210,6 +263,32 @@ docker-compose up --build
 ---
 
 ## API Quick Reference
+
+### Register and log in
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "officer@cybercell.gov.in",
+    "phone": "+919876543210",
+    "password": "a-strong-password",
+    "role": "officer"
+  }'
+
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "officer@cybercell.gov.in", "password": "a-strong-password"}'
+# → { "access_token": "...", "refresh_token": "...", "token_type": "bearer", "expires_in": 3600 }
+```
+
+Use the returned `access_token` as a Bearer token on any officer-only
+endpoint (creating cases, registering fraud entities, generating evidence
+packages, reading the audit trail):
+```bash
+curl -X POST http://localhost:8000/api/v1/fraud/cases \
+  -H "Authorization: Bearer <access_token>" \
+  --get --data-urlencode "title=Operation Test" --data-urlencode "fraud_type=digital_arrest"
+```
 
 ### Detect a scam call
 ```bash
@@ -311,6 +390,7 @@ python ml_training/fraud_graph/gnn_model.py --synthetic --epochs 50
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | ✅ | postgres://... | Async PostgreSQL URL |
+| `APP_SECRET_KEY` | ✅ | — | JWT signing secret — **must** be changed from the example value before any real deployment |
 | `REDIS_URL` | ✅ | redis://localhost | Redis URL |
 | `NEO4J_URI` | ✅ | bolt://localhost:7687 | Neo4j connection |
 | `NEO4J_PASSWORD` | ✅ | neo4j_pass | Neo4j password |
@@ -334,11 +414,19 @@ pytest tests/ -v
 # With coverage report
 pytest tests/ -v --cov=backend --cov-report=term-missing
 
+# Specific test file
+pytest tests/unit/test_auth.py -v
+
 # Specific test class
 pytest tests/unit/test_backend.py::TestScamCallClassifier -v
 ```
 
-**Current status: 51/51 passing**
+**Current status: 74/74 passing** (51 core — ML/geo/evidence/citizen shield, 23 auth — hashing/JWT/RBAC/route protection)
+
+For the mobile app's type safety:
+```bash
+cd mobile && npx tsc --noEmit
+```
 
 ---
 
@@ -347,7 +435,8 @@ pytest tests/unit/test_backend.py::TestScamCallClassifier -v
 | Layer | Technology |
 |-------|-----------|
 | API Framework | FastAPI 0.111 + Uvicorn |
-| Database | PostgreSQL 16 + PostGIS (async SQLAlchemy) |
+| Auth | JWT (python-jose) + bcrypt (direct, not via unmaintained passlib) |
+| Database | PostgreSQL 16 + PostGIS (async SQLAlchemy), schema versioned via Alembic |
 | Graph DB | Neo4j 5.18 Community |
 | Cache / Queue | Redis 7 + Celery 5 |
 | Vector Store | Qdrant 1.9 |
@@ -358,17 +447,26 @@ pytest tests/unit/test_backend.py::TestScamCallClassifier -v
 | PDF Generation | ReportLab |
 | Alerts | Twilio WhatsApp + SMS |
 | LLM | OpenAI GPT-4o-mini (CitizenShield) |
+| Web Console | React 19 + Vite + Tailwind + Framer Motion |
+| Mobile App | Expo Router + React Native 0.79 + react-native-paper |
 | Containerisation | Docker + Docker Compose |
 
 ---
 
 ## Security & Privacy
 
+- JWT authentication with bcrypt-hashed passwords; role-based access control
+  (citizen / officer / analyst / admin) gates every sensitive mutation
+- Citizen-facing endpoints (fraud assessment, scam-type reference,
+  helplines) remain public by design — no one should hit a login wall
+  while trying to report or check a scam
 - No raw audio ever stored — metadata + transcript snippet (max 500 chars) only
 - Phone numbers partially masked in all UI-facing responses
 - Full immutable audit trail in `audit_logs` table (for legal admissibility)
 - PDPB-compliant: citizen data is opt-in only via WhatsApp
 - All AI decisions logged with input hash + model version for court use
+- Mobile app stores tokens in `expo-secure-store` (OS keychain/keystore),
+  not plaintext AsyncStorage
 
 ---
 
@@ -376,12 +474,8 @@ pytest tests/unit/test_backend.py::TestScamCallClassifier -v
 
 **Event:** ET AI Hackathon 2.0 — Phase 2: Build Sprint  
 **Problem:** #6 — AI for Digital Public Safety: Defeating Counterfeiting, Fraud & Digital Arrest Scams  
-**Team:** Gautam N Chipkar  
-<<<<<<< HEAD
-**Submission deadline:** Wednesday, 22nd July 2026, 11:59 PM
-=======
+**Team:** Neural Capital  
 
->>>>>>> 6e5223ae2cceedee56e5a13d0b46d847cd20c3df
 
 ---
 

@@ -377,8 +377,8 @@ def train_gnn(
     with open(output_path / "gnn_config.json", "w") as f:
         json.dump(config, f, indent=2)
 
-    print(f"\n[GNN Training] ✅ Best F1: {best_f1:.4f}")
-    print(f"[GNN Training] ✅ Model saved to {checkpoint_path}")
+    print(f"\n[GNN Training] [OK] Best F1: {best_f1:.4f}")
+    print(f"[GNN Training] [OK] Model saved to {checkpoint_path}")
     return {"best_f1": best_f1, "checkpoint": checkpoint_path}
 
 

@@ -201,13 +201,21 @@ def train_yolo(
     model = YOLO(model_name)
 
     # Train
+    # NOTE: `project` must be an absolute path. Ultralytics nests any
+    # relative project path under its own global `runs/<task>/` root
+    # (from ~/.config/Ultralytics/settings.json), which silently produces
+    # a save directory that does not match a manually-reconstructed path
+    # like `output_path / name / weights / best.pt` below — that mismatch
+    # previously caused this script to report "best.pt not found" even on
+    # fully successful training runs.
+    project_dir = output_path.resolve()
     print(f"[YOLOTrain] Starting training: {epochs} epochs, img size {imgsz}")
     results = model.train(
         data=data_yaml,
         epochs=epochs,
         imgsz=imgsz,
         batch=batch_size,
-        project=str(output_path),
+        project=str(project_dir),
         name="safenet_counterfeit",
         exist_ok=True,
         pretrained=True,
@@ -235,10 +243,19 @@ def train_yolo(
         device=0 if __import__("torch").cuda.is_available() else "cpu",
     )
 
-    # Find best checkpoint
-    best_pt = output_path / "safenet_counterfeit" / "weights" / "best.pt"
-    if best_pt.exists():
-        import shutil
+    # Find best checkpoint — prefer asking the trainer directly rather than
+    # reconstructing the path by hand, since that's the one source of truth
+    # for where Ultralytics actually wrote the weights.
+    import shutil
+    trainer_best = getattr(getattr(model, "trainer", None), "best", None)
+    candidates = [
+        Path(trainer_best) if trainer_best else None,
+        project_dir / "safenet_counterfeit" / "weights" / "best.pt",
+        Path("runs") / "detect" / "safenet_counterfeit" / "weights" / "best.pt",
+    ]
+    best_pt = next((p for p in candidates if p and p.exists()), None)
+
+    if best_pt:
         final_path = output_path / "best_yolo.pt"
         shutil.copy(str(best_pt), str(final_path))
         print(f"[YOLOTrain] ✅ Best model saved to {final_path}")
