@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { color-scheme: dark; }
+
+body {
+  @apply bg-void text-ink font-body antialiased;
+  background-image:
+    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(255,90,54,0.08), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(47,217,196,0.06), transparent 55%);
+  background-attachment: fixed;
+}
+
+::selection { background: rgba(255,90,54,0.35); color: #fff; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #232B3D; border-radius: 8px; border: 2px solid #0A0C12; }
+::-webkit-scrollbar-thumb:hover { background: #2f3a52; }
+
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid #2FD9C4;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.hex-backdrop {
+  background-image:
+    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(255,90,54,0.10), transparent 60%),
+    theme('backgroundImage.hexgrid');
+  background-position: 0 0, center;
+  mask-image: linear-gradient(to bottom, black, transparent 92%);
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+.text-glow-signal { text-shadow: 0 0 24px rgba(255,90,54,0.35); }
+.text-glow-verified { text-shadow: 0 0 24px rgba(47,217,196,0.35); }
+
+.card { @apply relative rounded-xl border border-void-line bg-void-surface/70 backdrop-blur-sm; }
+.card-hover { @apply transition-all duration-300 hover:border-void-line hover:bg-void-raised/70; }
+.eyebrow { @apply font-mono text-[11px] uppercase tracking-[0.22em] text-ink-faint; }
+.divider { @apply h-px w-full bg-gradient-to-r from-void-line via-void-line to-transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
