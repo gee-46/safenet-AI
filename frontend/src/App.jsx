@@ -1,11 +1,9 @@
 import { useState, Suspense, lazy } from "react";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar, Topbar, MobileSidebar, nav } from "./components/layout/Shell";
-import { useAuth } from "./context/AuthContext";
 
 const Landing = lazy(() => import("./pages/Landing"));
-const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ScamShield = lazy(() => import("./pages/ScamShield"));
 const CounterfeitLens = lazy(() => import("./pages/CounterfeitLens"));
@@ -34,20 +32,6 @@ function PageTransition({ children }) {
       {children}
     </motion.div>
   );
-}
-
-function ProtectedRoute({ children }) {
-  const { isLoggedIn, loading } = useAuth();
-
-  if (loading) {
-    return <RouteFallback />;
-  }
-
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
 }
 
 function ConsoleLayout({ children }) {
@@ -83,14 +67,13 @@ export default function App() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
-          <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-          <Route path="/console" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
-          <Route path="/console/scam-shield" element={<ProtectedRoute><PageTransition><ScamShield /></PageTransition></ProtectedRoute>} />
-          <Route path="/console/counterfeit-lens" element={<ProtectedRoute><PageTransition><CounterfeitLens /></PageTransition></ProtectedRoute>} />
-          <Route path="/console/fraud-graph" element={<ProtectedRoute><PageTransition><FraudGraph /></PageTransition></ProtectedRoute>} />
-          <Route path="/console/geo-intel" element={<ProtectedRoute><PageTransition><GeoIntel /></PageTransition></ProtectedRoute>} />
-          <Route path="/console/citizen-shield" element={<ProtectedRoute><PageTransition><CitizenShield /></PageTransition></ProtectedRoute>} />
-          <Route path="/console/evidence" element={<ProtectedRoute><PageTransition><Evidence /></PageTransition></ProtectedRoute>} />
+          <Route path="/console" element={<PageTransition><Dashboard /></PageTransition>} />
+          <Route path="/console/scam-shield" element={<PageTransition><ScamShield /></PageTransition>} />
+          <Route path="/console/counterfeit-lens" element={<PageTransition><CounterfeitLens /></PageTransition>} />
+          <Route path="/console/fraud-graph" element={<PageTransition><FraudGraph /></PageTransition>} />
+          <Route path="/console/geo-intel" element={<PageTransition><GeoIntel /></PageTransition>} />
+          <Route path="/console/citizen-shield" element={<PageTransition><CitizenShield /></PageTransition>} />
+          <Route path="/console/evidence" element={<PageTransition><Evidence /></PageTransition>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </AnimatePresence>
