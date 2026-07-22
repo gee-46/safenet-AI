@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 """
 SafeNet AI – Main FastAPI Application
 Wires together all routes, middleware, lifespan events, and health checks.
@@ -286,6 +286,3 @@ if __name__ == "__main__":
         log_level="info",
         access_log=True,
     )
-=======
-
->>>>>>> 6e5223ae2cceedee56e5a13d0b46d847cd20c3df
